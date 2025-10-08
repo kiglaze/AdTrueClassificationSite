@@ -59,7 +59,8 @@ export default {
     currentImage() {
       const img = this.images[this.currentImageIndex];
       if (!img) return null;
-      return `/api/${img.full_filepath}`;
+      // Use absolute URL based on current origin
+      return `${window.location.origin}/api/${img.full_filepath}`;
     }
   },
   methods: {
