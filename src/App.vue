@@ -3,8 +3,16 @@
 
 <template>
   <div class="quiz-container">
+    <!-- Toggle background color link -->
+    <span class="toggle-bg-link" @click="toggleBg">
+      {{ isWhiteBg ? 'Switch to black background' : 'Switch to white background' }}
+    </span>
     <!-- Image -->
-    <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
+    <div class="image-container" :class="isWhiteBg ? 'white-bg' : 'black-bg'">
+      <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
+    </div>
+
+    <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
     <!-- Question -->
     <h2>{{ question.text }}</h2>
@@ -37,6 +45,7 @@ export default {
       selectedAnswer: null,
       images: [],
       currentImageIndex: 100,
+      isWhiteBg: false,
       question: {
         text: "Would you classify this image as either being an advertisement or coming from an advertisement?",
         options: [
@@ -89,6 +98,9 @@ export default {
       // Select a new image index
       this.currentImageIndex = this.currentImageIndex + 1;
       this.selectedAnswer = null;
+    },
+    toggleBg() {
+      this.isWhiteBg = !this.isWhiteBg;
     }
   }
 };
@@ -100,7 +112,24 @@ export default {
   margin: 0 auto;
   text-align: center;
 }
-
+.toggle-bg-link {
+  color: #0074d9;
+  cursor: pointer;
+  text-decoration: underline;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+.image-container.white-bg {
+  background: #fff;
+}
+.image-container.black-bg {
+  background: #000;
+}
+.image-container {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
 .question-image {
   max-width: 100%;
   margin-bottom: 1rem;
@@ -125,5 +154,12 @@ button {
 button:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+.image-link {
+  display: block;
+  margin-top: 0.5rem;
+  color: #0074d9;
+  text-decoration: underline;
+  font-size: 0.95rem;
 }
 </style>
