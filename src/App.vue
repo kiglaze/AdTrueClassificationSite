@@ -15,15 +15,15 @@
         <input
             type="radio"
             name="answer"
-            :value="option"
+            :value="option.value"
             v-model="selectedAnswer"
         />
-        {{ option }}
+        {{ option.label }}
       </label>
     </div>
 
     <!-- Submit Button -->
-    <button :disabled="!selectedAnswer" @click="submitAnswer">
+    <button :disabled="(selectedAnswer == null)" @click="submitAnswer">
       Submit & Continue
     </button>
   </div>
@@ -40,8 +40,8 @@ export default {
       question: {
         text: "Would you classify this image as either being an advertisement or coming from an advertisement?",
         options: [
-          "Yes, the image is an ad or comes from an ad.",
-          "No, the image is not an ad."
+          { label: "Yes, the image is an ad or comes from an ad.", value: 1 },
+          { label: "No, the image is not an ad.", value: 0 }
         ],
       },
     };
@@ -64,20 +64,32 @@ export default {
   },
   methods: {
     async submitAnswer() {
-      alert(`Selected answer: ${this.selectedAnswer}`);
-      // Randomly select a new image index
-      if (this.images.length > 1) {
-        let newIndex;
-        do {
-          newIndex = Math.floor(Math.random() * this.images.length);
-        } while (newIndex === this.currentImageIndex);
-        this.currentImageIndex = newIndex;
-      } else if (this.images.length === 1) {
-        this.currentImageIndex = 0;
+      // Call to API endpoint /api/update_classification, specifying both 'classification' and 'filepath' in the data.
+      const currentImage = this.images[this.currentImageIndex];
+      if (!currentImage) {
+        alert('No more images to classify.');
+        return;
       }
+      try {
+        const response = await fetch('/api/update_classification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            classification: this.selectedAnswer,
+            filepath: currentImage.full_filepath,
+          }),
+        });
+      } catch (error) {
+        alert('Failed to submit answer: ' + error.message);
+        return;
+      }
+      // Select a new image index
+      this.currentImageIndex = this.currentImageIndex + 1;
       this.selectedAnswer = null;
     }
-  },
+  }
 };
 </script>
 
