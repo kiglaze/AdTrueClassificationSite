@@ -21,6 +21,8 @@
 
     <p>{{currentImageText}}</p>
     <p><em>{{currentImageTextScript}}</em></p>
+    <p>{{ currentImageReferrerScreenshot }}</p>
+    <p>{{ currentImageReferrerRecording }}</p>
 
     <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
@@ -127,7 +129,17 @@ export default {
       const img = this.images[this.currentImageIndex];
       if (!img) return '';
       return img.text_script || '';
-    }
+    },
+    currentImageReferrerScreenshot() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return '';
+      return img.screenshot_filepath || '';
+    },
+    currentImageReferrerRecording() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return '';
+      return img.video_filepath || '';
+    },
   },
   methods: {
     async submitAnswer() {
