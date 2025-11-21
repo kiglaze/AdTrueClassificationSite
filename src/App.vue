@@ -12,6 +12,9 @@
       <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
     </div>
 
+    <p>{{currentImageText}}</p>
+    <p><em>{{currentImageTextScript}}</em></p>
+
     <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
     <!-- Question -->
@@ -30,10 +33,27 @@
       </label>
     </div>
 
-    <!-- Submit Button -->
-    <button :disabled="(selectedAnswer == null)" @click="submitAnswer">
-      Submit & Continue
-    </button>
+    <div class="button-row">
+      <button
+          class="btn-primary"
+          :disabled="selectedAnswer == null"
+          @click="submitAnswer"
+      >
+        Submit &amp; Continue
+      </button>
+
+      <div class="nav-buttons" v-if="images.length">
+        <button type="button" class="btn-nav" @click="previousImage">
+          ←
+        </button>
+        <span class="image-counter">
+          {{ currentImageIndex + 1 }} / {{ images.length }}
+        </span>
+        <button type="button" class="btn-nav" @click="nextImage">
+          →
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -44,7 +64,7 @@ export default {
     return {
       selectedAnswer: null,
       images: [],
-      currentImageIndex: 100,
+      currentImageIndex: 0,
       isWhiteBg: false,
       question: {
         text: "Would you classify this image as either being an advertisement or coming from an advertisement?",
@@ -70,6 +90,16 @@ export default {
       if (!img) return null;
       // Use absolute URL based on current origin
       return `${window.location.origin}/api/${img.full_filepath}`;
+    },
+    currentImageText() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return '';
+      return img.text || '';
+    },
+    currentImageTextScript() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return '';
+      return img.text_script || '';
     }
   },
   methods: {
@@ -96,8 +126,15 @@ export default {
         return;
       }
       // Select a new image index
-      this.currentImageIndex = this.currentImageIndex + 1;
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
       this.selectedAnswer = null;
+    },
+    async nextImage() {
+      this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
+    },
+    async previousImage() {
+      this.currentImageIndex =
+        (this.currentImageIndex - 1 + this.images.length) % this.images.length;
     },
     toggleBg() {
       this.isWhiteBg = !this.isWhiteBg;
@@ -155,6 +192,7 @@ button:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
+
 .image-link {
   display: block;
   margin-top: 0.5rem;
@@ -162,4 +200,9 @@ button:disabled {
   text-decoration: underline;
   font-size: 0.95rem;
 }
+
+.image-counter {
+  margin: 0 1rem;
+}
+
 </style>
