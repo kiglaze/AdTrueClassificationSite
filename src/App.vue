@@ -1,8 +1,15 @@
+
 <script setup>
 </script>
 
 <template>
   <div class="quiz-container">
+    <div class="username-row">
+      <label>
+        Username:
+        <input v-model="username" placeholder="Enter username" />
+      </label>
+    </div>
     <!-- Toggle background color link -->
     <span class="toggle-bg-link" @click="toggleBg">
       {{ isWhiteBg ? 'Switch to black background' : 'Switch to white background' }}
@@ -58,11 +65,14 @@
 </template>
 
 <script>
+import { useCookies } from 'vue3-cookies'
+
 export default {
   name: "QuizQuestion",
   data() {
     return {
       selectedAnswer: null,
+      username: '',
       images: [],
       currentImageIndex: 0,
       isWhiteBg: false,
@@ -80,8 +90,25 @@ export default {
       const response = await fetch('/api/');
       const result = await response.json();
       this.images = result.data || [];
+
+      // read username cookie
+      const { cookies } = useCookies();
+      const saved = cookies.get('username');
+      if (saved) this.username = saved;
     } catch (error) {
       alert('Failed to fetch images: ' + error.message);
+    }
+  },
+  watch: {
+    // whenever username changes, store it in a cookie
+    username(newVal) {
+      if (newVal) {
+        const { cookies } = useCookies();
+        cookies.set('username', newVal, '7d'); // expires in 7 days
+      } else {
+        const { cookies } = useCookies();
+        cookies.remove('username');
+      }
     }
   },
   computed: {
@@ -119,6 +146,7 @@ export default {
           body: JSON.stringify({
             classification: this.selectedAnswer,
             filepath: currentImage.full_filepath,
+            classification_issuer: this.username
           }),
         });
       } catch (error) {
