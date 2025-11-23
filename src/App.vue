@@ -10,71 +10,75 @@
         <input v-model="username" placeholder="Enter username" />
       </label>
     </div>
+    <div v-if="images.length > 0" class="quiz-contents">
+      <div class="nav-buttons" v-if="images.length">
+        <button type="button" class="btn-nav" @click="previousImage">
+          ←
+        </button>
+        <span class="image-counter">
+            {{ currentImageIndex + 1 }} / {{ images.length }}
+          </span>
+        <button type="button" class="btn-nav" @click="nextImage">
+          →
+        </button>
+      </div>
 
-    <div class="nav-buttons" v-if="images.length">
-      <button type="button" class="btn-nav" @click="previousImage">
-        ←
-      </button>
-      <span class="image-counter">
-          {{ currentImageIndex + 1 }} / {{ images.length }}
-        </span>
-      <button type="button" class="btn-nav" @click="nextImage">
-        →
-      </button>
-    </div>
+      <!-- Toggle background color link -->
+      <span class="toggle-bg-link" @click="toggleBg">
+        {{ isWhiteBg ? 'Switch to black background' : 'Switch to white background' }}
+      </span>
+      <!-- Image -->
+      <div class="image-container" :class="isWhiteBg ? 'white-bg' : 'black-bg'">
+        <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
+      </div>
 
-    <!-- Toggle background color link -->
-    <span class="toggle-bg-link" @click="toggleBg">
-      {{ isWhiteBg ? 'Switch to black background' : 'Switch to white background' }}
-    </span>
-    <!-- Image -->
-    <div class="image-container" :class="isWhiteBg ? 'white-bg' : 'black-bg'">
-      <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
-    </div>
+      <p>{{currentImageText}}</p>
+      <p><em>{{currentImageTextScript}}</em></p>
 
-    <p>{{currentImageText}}</p>
-    <p><em>{{currentImageTextScript}}</em></p>
+      <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
-    <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
+      <!-- Question -->
+      <h2>{{ question.text }}</h2>
 
-    <!-- Question -->
-    <h2>{{ question.text }}</h2>
+      <!-- Radio Buttons -->
+      <div v-for="(option, index) in question.options" :key="index" class="option">
+        <label>
+          <input
+              type="radio"
+              name="answer"
+              :value="option.value"
+              v-model="selectedAnswer"
+          />
+          {{ option.label }}
+        </label>
+      </div>
 
-    <!-- Radio Buttons -->
-    <div v-for="(option, index) in question.options" :key="index" class="option">
-      <label>
-        <input
-            type="radio"
-            name="answer"
-            :value="option.value"
-            v-model="selectedAnswer"
+      <div class="button-row">
+        <button
+            class="btn-primary"
+            :disabled="selectedAnswer == null"
+            @click="submitAnswer"
+        >
+          Submit &amp; Continue
+        </button>
+      </div>
+
+      <div class="referrer-row">
+        <ReferrerDropdown
+            :key="currentImageIndex + '-screenshot'"
+            title="Referring Website - Screenshot"
+            :src="currentImageReferrerScreenshot"
         />
-        {{ option.label }}
-      </label>
+
+        <ReferrerDropdown
+            :key="currentImageIndex + '-recording'"
+            title="Referring Website - Screencast Recording"
+            :src="currentImageReferrerRecording"
+        />
+      </div>
     </div>
-
-    <div class="button-row">
-      <button
-          class="btn-primary"
-          :disabled="selectedAnswer == null"
-          @click="submitAnswer"
-      >
-        Submit &amp; Continue
-      </button>
-    </div>
-
-    <div class="referrer-row">
-      <ReferrerDropdown
-          :key="currentImageIndex + '-screenshot'"
-          title="Referring Website - Screenshot"
-          :src="currentImageReferrerScreenshot"
-      />
-
-      <ReferrerDropdown
-          :key="currentImageIndex + '-recording'"
-          title="Referring Website - Screencast Recording"
-          :src="currentImageReferrerRecording"
-      />
+    <div v-else class="quiz-contents">
+      <p>There are no images available for you to classify.</p>
     </div>
   </div>
 </template>
