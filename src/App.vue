@@ -10,6 +10,19 @@
         <input v-model="username" placeholder="Enter username" />
       </label>
     </div>
+
+    <div class="nav-buttons" v-if="images.length">
+      <button type="button" class="btn-nav" @click="previousImage">
+        ←
+      </button>
+      <span class="image-counter">
+          {{ currentImageIndex + 1 }} / {{ images.length }}
+        </span>
+      <button type="button" class="btn-nav" @click="nextImage">
+        →
+      </button>
+    </div>
+
     <!-- Toggle background color link -->
     <span class="toggle-bg-link" @click="toggleBg">
       {{ isWhiteBg ? 'Switch to black background' : 'Switch to white background' }}
@@ -21,8 +34,6 @@
 
     <p>{{currentImageText}}</p>
     <p><em>{{currentImageTextScript}}</em></p>
-    <p>{{ currentImageReferrerScreenshot }}</p>
-    <p>{{ currentImageReferrerRecording }}</p>
 
     <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
@@ -50,27 +61,33 @@
       >
         Submit &amp; Continue
       </button>
+    </div>
 
-      <div class="nav-buttons" v-if="images.length">
-        <button type="button" class="btn-nav" @click="previousImage">
-          ←
-        </button>
-        <span class="image-counter">
-          {{ currentImageIndex + 1 }} / {{ images.length }}
-        </span>
-        <button type="button" class="btn-nav" @click="nextImage">
-          →
-        </button>
-      </div>
+    <div class="referrer-row">
+      <ReferrerDropdown
+          :key="currentImageIndex + '-screenshot'"
+          title="Referring Website - Screenshot"
+          :src="currentImageReferrerScreenshot"
+      />
+
+      <ReferrerDropdown
+          :key="currentImageIndex + '-recording'"
+          title="Referring Website - Screencast Recording"
+          :src="currentImageReferrerRecording"
+      />
     </div>
   </div>
 </template>
 
 <script>
 import { useCookies } from 'vue3-cookies'
+import ReferrerDropdown from './components/ReferrerDropdown.vue'
 
 export default {
   name: "QuizQuestion",
+  components: {
+    ReferrerDropdown
+  },
   data() {
     return {
       selectedAnswer: null,
@@ -78,6 +95,7 @@ export default {
       images: [],
       currentImageIndex: 0,
       isWhiteBg: false,
+      showReferrers: false,
       question: {
         text: "Would you classify this image as either being an advertisement or coming from an advertisement?",
         options: [
@@ -133,12 +151,12 @@ export default {
     currentImageReferrerScreenshot() {
       const img = this.images[this.currentImageIndex];
       if (!img) return '';
-      return img.screenshot_filepath || '';
+      return `${window.location.origin}/api/${img.screenshot_filepath}`;
     },
     currentImageReferrerRecording() {
       const img = this.images[this.currentImageIndex];
       if (!img) return '';
-      return img.video_filepath || '';
+      return `${window.location.origin}/api/${img.video_filepath}`;
     },
   },
   methods: {
@@ -185,10 +203,34 @@ export default {
 
 <style scoped>
 .quiz-container {
-  max-width: 500px;
   margin: 0 auto;
   text-align: center;
 }
+
+/* Larger screens: tablet and up */
+@media (min-width: 600px) {
+  .quiz-container {
+    width: 80%;      /* 2 columns */
+  }
+}
+
+/* Desktop */
+@media (min-width: 1000px) {
+  .quiz-container {
+    width: 900px;    /* 3 columns */
+  }
+}
+@media (min-width: 1200px) {
+  .quiz-container {
+    width: 1100px;    /* 3 columns */
+  }
+}
+@media (min-width: 1400px) {
+  .quiz-container {
+    width: 1300px;    /* 3 columns */
+  }
+}
+
 .toggle-bg-link {
   color: #0074d9;
   cursor: pointer;
@@ -244,5 +286,10 @@ button:disabled {
 .image-counter {
   margin: 0 1rem;
 }
+
+.username-row {
+  margin-top: 1em;
+}
+
 
 </style>
