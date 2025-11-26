@@ -17,7 +17,15 @@ const distPath = path.join(__dirname, 'dist');
 if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);
 
 // Security and performance
-app.use(helmet());
+app.use(
+    helmet({
+        // Disable HSTS because you're not serving HTTPS on this port
+        hsts: false,
+        // Optional: avoid the noisy console warning about COOP on non-HTTPS
+        crossOriginOpenerPolicy: false,
+    })
+);
+
 app.use(compression());
 
 // Optional: redirect HTTP to HTTPS when FORCE_HTTPS is "true" and trust proxy is enabled
