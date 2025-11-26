@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import compression from 'compression';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,9 +49,14 @@ app.use(
 );
 
 // Example API placeholder (replace with real routes)
-app.use('/api', (req, res) => {
-    res.status(200).json({ message: 'API placeholder' });
-});
+app.use(
+    '/api',
+    createProxyMiddleware({
+        target: 'http://0.0.0.0:5000',  // where your Dockerized Flask API is exposed
+        changeOrigin: true,
+        pathRewrite: (path) => path.replace(/^\/api/, ''),  // match your Vite proxy behavior
+    })
+);
 
 // SPA fallback: use a regex route to avoid path-to-regexp string parsing issues
 app.get(/.*/, (req, res, next) => {
