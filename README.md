@@ -29,7 +29,7 @@ npm run build
 
 ### Run on Production
 ```sh
-PORT=3000 NODE_ENV=production HOST=127.0.0.1 node prod-server.js
+PORT=3000 NODE_ENV=production HOST=0.0.0.0 node prod-server.js
 ```
 OR
 ```sh
