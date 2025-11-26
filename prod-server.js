@@ -57,10 +57,25 @@ app.get(/.*/, (req, res, next) => {
 });
 
 const server = app.listen(port, host, () => {
-    console.log(`Serving \`dist\` at http://${host}:${port} (NODE_ENV=${process.env.NODE_ENV || 'development'})`);
+    const addr = server.address();
+    const address = addr && addr.address ? addr.address : host;
+    const boundPort = addr && addr.port ? addr.port : port;
+    console.log(`Serving \`dist\` at http://${address}:${boundPort} (NODE_ENV=${process.env.NODE_ENV || 'development'})`);
 });
 
-// Graceful shutdown
+server.on('error', (err) => {
+    console.error('Server failed to start:', err);
+    if (err.code === 'EADDRINUSE') {
+        console.error('Port is already in use. Run `sudo lsof -nP -iTCP:PORT -sTCP:LISTEN` to find the process.');
+    } else if (err.code === 'EACCES') {
+        console.error('Insufficient privileges to bind to this port (use non-privileged port or run with elevated privileges).');
+    } else if (err.code === 'EADDRNOTAVAIL') {
+        console.error('The HOST IP is not available on this machine. Use `0.0.0.0` or an IP assigned to an interface.');
+    }
+    process.exit(1);
+});
+
+// graceful shutdown (unchanged)
 const shutdown = () => {
     console.log('Shutting down server...');
     server.close(() => process.exit(0));
