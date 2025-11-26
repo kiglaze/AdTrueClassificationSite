@@ -27,6 +27,15 @@ npm run dev
 npm run build
 ```
 
+### Run on Production
+```sh
+PORT=3000 NODE_ENV=production HOST=127.0.0.1 node prod-server.js
+```
+OR
+```sh
+PORT=3000 NODE_ENV=production node dev-server.js
+```
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
