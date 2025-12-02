@@ -31,6 +31,10 @@ npm run build
 ```sh
 PORT=3000 NODE_ENV=production HOST=0.0.0.0 node prod-server.js
 ```
+OR using pm2 (preferred -- to keep the server alive in the background):
+```sh
+PORT=3000 NODE_ENV=production HOST=0.0.0.0 pm2 start prod-server.js --name mysite
+```
 OR
 ```sh
 PORT=3000 NODE_ENV=production node dev-server.js
