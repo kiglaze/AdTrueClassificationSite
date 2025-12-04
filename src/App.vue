@@ -29,13 +29,13 @@
       </span>
       <!-- Image -->
       <div class="image-container" :class="isWhiteBg ? 'white-bg' : 'black-bg'">
-        <img v-if="currentImage" :src="currentImage" alt="Quiz Image" class="question-image" />
+        <img v-if="currentImage" :src="currentImageReencoded" alt="Quiz Image" class="question-image" />
       </div>
 
       <p>{{currentImageText}}</p>
       <p><em>{{currentImageTextScript}}</em></p>
 
-      <a v-if="currentImage" :href="currentImage" target="_blank" class="image-link">Can't see? Open image in new tab</a>
+      <a v-if="currentImage" :href="currentImageReencoded" target="_blank" class="image-link">Can't see? Open image in new tab</a>
 
       <!-- Question -->
       <h2>{{ question.text }}</h2>
@@ -141,6 +141,25 @@ export default {
       if (!img) return null;
       // Use absolute URL based on current origin
       return `${window.location.origin}/api/${img.full_filepath}`;
+    },
+    currentImageReencoded() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return null;
+
+      const full = img.full_filepath || '';
+      const lastSlash = full.lastIndexOf('/');
+      const head = lastSlash >= 0 ? full.slice(0, lastSlash + 1) : '';
+      let filename = lastSlash >= 0 ? full.slice(lastSlash + 1) : full;
+
+      // Try to normalize any existing percent-encoding, then re-encode the filename
+      try {
+        filename = encodeURIComponent(filename);
+      } catch (e) {
+        // If decode fails (malformed), fall back to encoding raw
+        filename = encodeURIComponent(filename);
+      }
+
+      return `${window.location.origin}/api/${head}${filename}`;
     },
     currentImageText() {
       const img = this.images[this.currentImageIndex];
