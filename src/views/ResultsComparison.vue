@@ -31,7 +31,14 @@
         <tbody>
         <tr v-for="row in pivotedTable" :key="row.full_filepath">
           <td class="border px-2 py-1 break-all">
-            {{ row.full_filepath }}
+            <a
+                :href="fileUrl(row.full_filepath)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-blue-600 underline"
+            >
+              <span v-text="row.full_filepath"></span>
+            </a>
           </td>
           <td
               v-for="issuer in issuers"
@@ -72,6 +79,27 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function fileUrl(full) {
+  if (!full) return ''
+  const lastSlash = full.lastIndexOf('/')
+  const head = lastSlash >= 0 ? full.slice(0, lastSlash + 1) : ''
+  let filename = lastSlash >= 0 ? full.slice(lastSlash + 1) : full
+
+  try {
+    // try to decode any existing percent-encoding first
+    filename = decodeURIComponent(filename)
+  } catch (e) {
+    // ignore malformed encoding and use raw filename
+  }
+
+  filename = encodeURIComponent(filename)
+
+  // remove leading slashes from head so `/api/` + head doesn't become `/api//...`
+  const apiPath = head.replace(/^\/+/, '')
+
+  return `${window.location.origin}/api/${apiPath}${filename}`
+}
 
 const issuers = computed(() => {
   return [...new Set(rawData.value.map((d) => d.classification_issuer))]
