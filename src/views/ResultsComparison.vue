@@ -86,13 +86,6 @@ function fileUrl(full) {
   const head = lastSlash >= 0 ? full.slice(0, lastSlash + 1) : ''
   let filename = lastSlash >= 0 ? full.slice(lastSlash + 1) : full
 
-  try {
-    // try to decode any existing percent-encoding first
-    filename = decodeURIComponent(filename)
-  } catch (e) {
-    // ignore malformed encoding and use raw filename
-  }
-
   filename = encodeURIComponent(filename)
 
   // remove leading slashes from head so `/api/` + head doesn't become `/api//...`
