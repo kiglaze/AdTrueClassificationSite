@@ -3,7 +3,10 @@
     <div class="username-row">
       <label>
         Username:
-        <input v-model="username" placeholder="Enter username" />
+        <select v-model="username">
+          <option disabled value="">Select username</option>
+          <option v-for="opt in usernameOptions" :key="opt" :value="opt">{{ opt }}</option>
+        </select>
       </label>
     </div>
     <div v-if="images.length > 0" class="quiz-contents">
@@ -92,6 +95,7 @@ export default {
     return {
       selectedAnswer: null,
       username: '',
+      usernameOptions: [],
       images: [],
       currentImageIndex: 0,
       isWhiteBg: false,
@@ -107,28 +111,44 @@ export default {
   },
   async mounted() {
     try {
-      const response = await fetch('/api/');
-      const result = await response.json();
-      this.images = result.data || [];
-
       // read username cookie
       const { cookies } = useCookies();
       const saved = cookies.get('username');
       if (saved) this.username = saved;
+
+      const imagesRequestUrl = this.username
+          ? `/api/?user=${encodeURIComponent(this.username)}`
+          : '/api/';
+      const [questionsResponse, usernamesResponse] = await Promise.all([
+        fetch(imagesRequestUrl),
+        fetch('/api/user_options'),
+      ]);
+      const questionsResult = await questionsResponse.json();
+      this.images = questionsResult.data || [];
+      const usernamesResult = await usernamesResponse.json();
+      this.usernameOptions = usernamesResult.data || [];
+
+
     } catch (error) {
       alert('Failed to fetch images: ' + error.message);
     }
   },
   watch: {
     // whenever username changes, store it in a cookie
-    username(newVal) {
-      if (newVal) {
+    async username(newUsernameVal) {
+      if (newUsernameVal) {
         const { cookies } = useCookies();
-        cookies.set('username', newVal, '7d'); // expires in 7 days
+        cookies.set('username', newUsernameVal, '7d'); // expires in 7 days
       } else {
         const { cookies } = useCookies();
         cookies.remove('username');
       }
+      const imagesRequestUrl = newUsernameVal
+          ? `/api/?user=${encodeURIComponent(newUsernameVal)}`
+          : '/api/';
+      const questionsResponse = await fetch(imagesRequestUrl);
+      const questionsResult = await questionsResponse.json();
+      this.images = questionsResult.data || [];
     }
   },
   computed: {
