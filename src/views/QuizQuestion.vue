@@ -39,27 +39,77 @@
       <!-- Question -->
       <h2>{{ question.text }}</h2>
 
-      <!-- Radio Buttons -->
-      <div v-for="(option, index) in question.options" :key="index" class="option">
-        <label>
-          <input
-              type="radio"
-              name="answer"
-              :value="option.value"
-              v-model="selectedAnswer"
-          />
-          {{ option.label }}
-        </label>
+      <div class="options-group">
+        <!-- Radio Buttons -->
+        <div v-for="(option, index) in question.options" :key="index" class="option">
+          <label>
+            <input
+                type="radio"
+                name="answer"
+                :value="option.value"
+                v-model="selectedAnswer"
+            />
+            {{ option.label }}
+          </label>
+        </div>
+        <div class="field-wrapper">
+          <label>
+            <input
+                type="checkbox"
+                v-model="isAdMarker"
+                @click="isAdMarker = !isAdMarker"
+            />
+            Is image an "ad marker"?
+            <span class="info-icon">
+                ⓘ
+                <span class="tooltip-text">
+                  Check if this image is an "ad marker", such as an "AdChoice" label, that indicates the image is an ad but isn't itself an ad.
+                </span>
+              </span>
+          </label>
+        </div>
+
+      </div>
+
+      <div class="additional-options">
+
+
       </div>
 
       <div class="button-row">
         <button
-            class="btn-primary"
+            class="button-row-item btn-primary submit-btn"
             :disabled="selectedAnswer == null"
             @click="submitAnswer"
         >
           Submit &amp; Continue
         </button>
+        <div class="button-row-item field-wrapper field-wrapper-flag">
+          <div class="field-wrapper-flag">
+            <button
+                type="button"
+                class="flag-btn"
+                :class="{ 'active': isFlagged }"
+                @click="isFlagged = !isFlagged"
+            >
+              ⚑
+            </button>
+            <label>Flag Image?</label>
+            <span class="info-icon">
+              ⓘ
+              <span class="tooltip-text">
+                Flag if there is an issue with the image, such as it being corrupted, confusing, or otherwise problematic. You can provide additional details in the text box that appears when you flag an image.
+              </span>
+            </span>
+          </div>
+          <textarea
+              v-if="isFlagged"
+              type="textarea"
+              v-model="flagNotes"
+              placeholder="Why are you flagging this?"
+              class="flag-input"
+          />
+        </div>
       </div>
 
       <div class="referrer-row">
@@ -107,6 +157,9 @@ export default {
           { label: "No, the image is not an ad.", value: 0 }
         ],
       },
+      isFlagged: false,
+      flagNotes: '',
+      isAdMarker: false,
     };
   },
   async mounted() {
@@ -199,6 +252,12 @@ export default {
     },
   },
   methods: {
+    resetAnswer() {
+      this.selectedAnswer = null;
+      this.isFlagged = false;
+      this.flagNotes = '';
+      this.isAdMarker = false;
+    },
     async submitAnswer() {
       // Call to API endpoint /api/update_classification, specifying both 'classification' and 'filepath' in the data.
       const currentImage = this.images[this.currentImageIndex];
@@ -215,7 +274,10 @@ export default {
           body: JSON.stringify({
             classification: this.selectedAnswer,
             filepath: currentImage.full_filepath,
-            classification_issuer: this.username
+            classification_issuer: this.username,
+            flag_issue: this.isFlagged,
+            notes: this.flagNotes,
+            is_ad_marker: this.isAdMarker,
           }),
         });
       } catch (error) {
@@ -224,14 +286,16 @@ export default {
       }
       // Select a new image index
       this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
-      this.selectedAnswer = null;
+      this.resetAnswer();
     },
     async nextImage() {
       this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
+      this.resetAnswer();
     },
     async previousImage() {
       this.currentImageIndex =
           (this.currentImageIndex - 1 + this.images.length) % this.images.length;
+      this.resetAnswer();
     },
     toggleBg() {
       this.isWhiteBg = !this.isWhiteBg;
@@ -330,5 +394,142 @@ button:disabled {
   margin-top: 1em;
 }
 
+.flag-btn.active {
+  background-color: #a60909;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.info-icon {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  color: #0074d9;
+  font-weight: bold;
+}
+
+/* Tooltip container */
+.tooltip-text {
+  font-style: italic;
+  visibility: hidden;
+  width: 220px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position above the icon */
+  left: 50%;
+  margin-left: -110px; /* Center the tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.8rem;
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+/* Tooltip arrow */
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+/* Show the tooltip on hover */
+.info-icon:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.flag-btn {
+  background-color: #f1f1f1;
+  color: #666;
+  border: 1px solid #ddd;
+  font-size: 1.2rem;
+  padding: 4px 10px;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.flag-btn.active {
+  background-color: #ffebeb;
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.flag-input {
+  width: 100%;
+  max-width: 500px;
+  min-height: 80px;
+  padding: 12px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical; /* Allows user to grow height, but not width */
+  transition: border-color 0.3s, box-shadow 0.3s;
+  outline: none;
+}
+
+.flag-input:focus {
+  border-color: #42b983; /* Matches your primary button color */
+  box-shadow: 0 0 8px rgba(66, 185, 131, 0.2);
+}
+
+.flag-input::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+.additional-options {
+  margin: 0rem 2rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.field-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0rem 0;
+  padding: 0rem;
+  width: 40%;
+}
+.field-wrapper-flag {
+  display: flex;
+  align-items: center; /* keep button + label + icon on one row */
+  gap: 12px;
+  flex-wrap: wrap;     /* allow children to wrap to next line */
+  padding: 0rem 1rem;
+}
+.field-wrapper-flag button{
+  margin-top: 0;
+}
+
+.button-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+
+}
+.button-row-item {
+  order: 4;
+  align-self: flex-end;
+}
 
 </style>
