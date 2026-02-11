@@ -14,42 +14,38 @@
       </div>
 
       <!-- Table -->
-      <table class="table-auto border-collapse border border-gray-400 text-sm w-full">
+      <table>
         <thead>
         <tr>
-          <th class="border px-2 py-1 text-left">Filepath</th>
           <th
               v-for="issuer in issuers"
               :key="issuer"
-              class="border px-2 py-1 text-center"
           >
             {{ issuer }}
           </th>
+          <th>Filepath</th>
         </tr>
         </thead>
 
         <tbody>
         <tr v-for="row in pivotedTable" :key="row.full_filepath">
-          <td class="border px-2 py-1 break-all">
+          <td
+              scope="col"
+              v-for="issuer in issuers"
+              :key="issuer"
+          >
+            {{ row[issuer] ?? '' }}
+          </td>
+          <td>
             <a
                 :href="fileUrl(row.full_filepath)"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="text-blue-600 underline"
             >
-              <span v-text="row.full_filepath"></span>
+              <span>
+                {{ row.full_filepath }}
+              </span>
             </a>
-          </td>
-          <td
-              v-for="issuer in issuers"
-              :key="issuer"
-              class="border px-2 py-1 text-center"
-              :class="{
-                'bg-green-100': row[issuer] === 0,
-                'bg-red-100': row[issuer] === 1
-              }"
-          >
-            {{ row[issuer] ?? '' }}
           </td>
         </tr>
         </tbody>
@@ -138,3 +134,14 @@ const agreementStats = computed(() => {
   }
 })
 </script>
+
+<style>
+table {
+  border: 1px solid #ddd;
+  width: 100%;
+}
+th:last-child, td:last-child {
+  word-wrap: break-word;
+  max-width: 800px;
+}
+</style>
