@@ -54,85 +54,89 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script>
+export default {
+  // 1. Data handles your reactive state
+  data() {
+    return {
+      rawData: [],
+      loading: true,
+      error: null
+    };
+  },
 
-const rawData = ref([])
-const loading = ref(true)
-const error = ref(null)
+  // 2. Computed handles derived values (logic based on data)
+  computed: {
+    issuers() {
+      return [...new Set(this.rawData.map((d) => d.classification_issuer))];
+    },
 
-onMounted(async () => {
-  try {
-    const res = await fetch('/api/results')
-    if (!res.ok) {
-      throw new Error(`Request failed: ${res.status}`)
+    pivotedTable() {
+      const grouped = {};
+      for (const row of this.rawData) {
+        const fp = row.full_filepath;
+        if (!grouped[fp]) {
+          grouped[fp] = { full_filepath: fp };
+        }
+        grouped[fp][row.classification_issuer] = row.is_suspected_ad_manual;
+      }
+      return Object.values(grouped);
+    },
+
+    agreementStats() {
+      const rows = this.pivotedTable;
+      const total = rows.length;
+      if (!total || !this.issuers.length) {
+        return { total: 0, agree: 0, percentAgree: '0.0' };
+      }
+
+      let agreeCount = 0;
+      for (const row of rows) {
+        const answers = this.issuers.map(i => row[i]).filter(a => a !== undefined);
+        if (answers.length > 0 && answers.every(a => a === answers[0])) {
+          agreeCount++;
+        }
+      }
+
+      return {
+        total,
+        agree: agreeCount,
+        percentAgree: ((agreeCount / total) * 100).toFixed(1)
+      };
     }
-    const json = await res.json()
-    rawData.value = json.data || json || []
-  } catch (e) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
-})
+  },
 
-function fileUrl(full) {
-  if (!full) return ''
-  const lastSlash = full.lastIndexOf('/')
-  const head = lastSlash >= 0 ? full.slice(0, lastSlash + 1) : ''
-  let filename = lastSlash >= 0 ? full.slice(lastSlash + 1) : full
+  // 3. Methods handle functions/actions
+  methods: {
+    fileUrl(full) {
+      if (!full) return '';
+      const lastSlash = full.lastIndexOf('/');
+      const head = lastSlash >= 0 ? full.slice(0, lastSlash + 1) : '';
+      let filename = lastSlash >= 0 ? full.slice(lastSlash + 1) : full;
+      filename = encodeURIComponent(filename);
+      const apiPath = head.replace(/^\/+/, '');
+      return `${window.location.origin}/api/${apiPath}${filename}`;
+    },
 
-  filename = encodeURIComponent(filename)
-
-  // remove leading slashes from head so `/api/` + head doesn't become `/api//...`
-  const apiPath = head.replace(/^\/+/, '')
-
-  return `${window.location.origin}/api/${apiPath}${filename}`
-}
-
-const issuers = computed(() => {
-  return [...new Set(rawData.value.map((d) => d.classification_issuer))]
-})
-
-const pivotedTable = computed(() => {
-  const grouped = {}
-
-  for (const row of rawData.value) {
-    const fp = row.full_filepath
-    if (!grouped[fp]) {
-      grouped[fp] = { full_filepath: fp }
+    async fetchResults() {
+      try {
+        const res = await fetch('/api/results');
+        if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+        const json = await res.json();
+        this.rawData = json.data || json || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
     }
-    grouped[fp][row.classification_issuer] = row.is_suspected_ad_manual
+  },
+
+  // 4. Lifecycle hooks
+  mounted() {
+    this.fetchResults();
   }
-
-  return Object.values(grouped)
-})
-
-const agreementStats = computed(() => {
-  const rows = pivotedTable.value
-  const total = rows.length
-
-  if (!total || !issuers.value.length) {
-    return { total: 0, agree: 0, percentAgree: '0.0' }
-  }
-
-  let agreeCount = 0
-
-  for (const row of rows) {
-    const answers = issuers.value.map(i => row[i]).filter(a => a !== undefined)
-    if (answers.length === 0) continue
-
-    if (answers.every(a => a === answers[0])) {
-      agreeCount++
-    }
-  }
-
-  return {
-    total,
-    agree: agreeCount,
-    percentAgree: ((agreeCount / total) * 100).toFixed(1)
-  }
-})
+};
 </script>
 
 <style>
