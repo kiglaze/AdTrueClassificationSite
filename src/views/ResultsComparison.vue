@@ -13,6 +13,37 @@
         ({{ agreementStats.percentAgree }}%)
       </div>
 
+      <ul>
+        <li v-for="issuer in issuers" :key="issuer">
+          {{ issuer }} <span v-if="issuerTotalCounts && issuerAnsweredCounts && issuerTotalCounts[issuer] && issuerAnsweredCounts[issuer]">Answered {{issuerAnsweredCounts[issuer]}} / {{issuerTotalCounts[issuer]}}</span>
+          <div class="runner-container">
+            <label>Round Progress: {{ (100 * issuerAnsweredCounts[issuer] / issuerTotalCounts[issuer]) }}%</label>
+
+            <div class="slider-wrapper" v-if="issuerTotalCounts && issuerAnsweredCounts && issuerTotalCounts[issuer] && issuerAnsweredCounts[issuer]">
+              <div class="track">
+                <div class="fill" :style="{ width: (100 * issuerAnsweredCounts[issuer] / issuerTotalCounts[issuer]) + '%' }"></div>
+
+                <div
+                    class="runner"
+                    :style="{ left: (100 * issuerAnsweredCounts[issuer] / issuerTotalCounts[issuer]) + '%' }"
+                    :class="{ 'is-running': issuerAnsweredCounts[issuer] > 0 && issuerAnsweredCounts[issuer] < issuerTotalCounts[issuer] }"
+                >
+                  <div class="icon-flip">🏃‍➡️</div>
+                  <div class="dust-cloud" v-if="issuerAnsweredCounts[issuer] > 0 && issuerAnsweredCounts[issuer] < issuerTotalCounts[issuer]"></div>
+                </div>
+              </div>
+
+              <input
+                  type="range"
+                  min="0"
+                  :max="issuerTotalCounts[issuer]"
+                  class="real-input"
+              />
+            </div>
+          </div>
+        </li>
+      </ul>
+
       <!-- Table -->
       <table>
         <thead>
@@ -61,7 +92,9 @@ export default {
     return {
       rawData: [],
       loading: true,
-      error: null
+      error: null,
+      issuerTotalCounts: {},
+      issuerAnsweredCounts: {}
     };
   },
 
@@ -106,6 +139,20 @@ export default {
     }
   },
 
+  watch: {
+    // This runs whenever the 'issuers' list changes
+    issuers(newIssuers) {
+      if (newIssuers.length > 0) {
+        for (let i = 0; i < newIssuers.length; i++) {
+          let userString = newIssuers[i];
+          this.fetchIssuerTotalCounts(newIssuers)
+          this.fetchIssuerAnsweredCounts(newIssuers)
+        }
+
+      }
+    }
+  },
+
   // 3. Methods handle functions/actions
   methods: {
     fileUrl(full) {
@@ -129,7 +176,51 @@ export default {
       } finally {
         this.loading = false;
       }
-    }
+    },
+
+    async fetchIssuerTotalCounts(issuerList) {
+      try {
+        // Making concurrent API calls for each issuer
+        const requests = issuerList.map(issuer =>
+            fetch(`/api/count_total_questions?user=${encodeURIComponent(issuer)}`)
+                .then(async (res) => {
+                  const data = await res.json();
+                  // Return an object containing both the name and the count
+                  return { issuer, count: data.count };
+                })
+        );
+
+        const results = await Promise.all(requests);
+
+        for (const result of results) {
+          this.issuerTotalCounts[result.issuer] = result.count;
+        }
+      } catch (e) {
+        console.error("Failed to fetch issuer total count details:", e);
+      }
+    },
+
+    async fetchIssuerAnsweredCounts(issuerList) {
+      try {
+        // Making concurrent API calls for each issuer
+        const requests = issuerList.map(issuer =>
+            fetch(`/api/count_answered_questions?user=${encodeURIComponent(issuer)}`)
+                .then(async (res) => {
+                  const data = await res.json();
+                  // Return an object containing both the name and the count
+                  return { issuer, count: data.count };
+                })
+        );
+
+        const results = await Promise.all(requests);
+
+        for (const result of results) {
+          this.issuerAnsweredCounts[result.issuer] = result.count;
+        }
+      } catch (e) {
+        console.error("Failed to fetch issuer total count details:", e);
+      }
+    },
   },
 
   // 4. Lifecycle hooks
@@ -148,4 +239,84 @@ th:last-child, td:last-child {
   word-wrap: break-word;
   max-width: 800px;
 }
+
+
+.runner-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+  font-family: sans-serif;
+}
+
+.slider-wrapper {
+  position: relative;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.track {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: visible; /* Important so the man isn't cut off */
+}
+
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 10px;
+  transition: width 0.1s ease-out;
+}
+
+.runner {
+  position: absolute;
+  top: -35px; /* Position him above the bar */
+  font-size: 30px;
+  transition: left 0.1s ease-out;
+  transform: translateX(-50%); /* Center the icon on the point */
+  user-select: none;
+  pointer-events: none;
+}
+
+/* The Running Animation */
+.is-running .icon-flip {
+  animation: run-wiggle 0.3s infinite alternate;
+}
+
+@keyframes run-wiggle {
+  0% { transform: translateY(0) rotate(-5deg); }
+  100% { transform: translateY(-5px) rotate(10deg); }
+}
+
+/* Invisible range input overlaid on top to handle dragging */
+.real-input {
+  position: absolute;
+  width: 100%;
+  height: 40px;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Optional: Fun dust cloud effect */
+.dust-cloud {
+  position: absolute;
+  bottom: 0;
+  left: -10px;
+  width: 10px;
+  height: 10px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 50%;
+  animation: dust 0.5s infinite;
+}
+
+@keyframes dust {
+  0% { opacity: 1; transform: scale(1) translateX(0); }
+  100% { opacity: 0; transform: scale(2) translateX(-20px); }
+}
+
 </style>
