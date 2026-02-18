@@ -8,7 +8,7 @@
     <div v-else>
       <!-- Agreement stats -->
       <div class="mb-4 text-lg" v-if="isRoundComplete">
-        <strong>Agreement:</strong>
+        <strong>Agreement for overlapping questions:</strong>
         {{ agreementStats.agree }} / {{ agreementStats.total }}
         ({{ agreementStats.percentAgree }}%)
       </div>
@@ -119,15 +119,30 @@ export default {
 
     agreementStats() {
       const rows = this.pivotedTable;
-      const total = rows.length;
-      if (!total || !this.issuers.length) {
+      const numIssuers = this.issuers.length;
+
+      if (!rows.length || !numIssuers) {
         return { total: 0, agree: 0, percentAgree: '0.0' };
       }
 
+      // 1. Filter rows to only include those where EVERY issuer has an entry
+      const completedRows = rows.filter(row => {
+        const answers = this.issuers.map(i => row[i]);
+        // Check that none of the answers are undefined or null
+        return answers.every(a => a !== undefined && a !== null);
+      });
+
+      const total = completedRows.length;
+      if (total === 0) {
+        return { total: 0, agree: 0, percentAgree: '0.0' };
+      }
+
+      // 2. Count agreements among the completed rows
       let agreeCount = 0;
-      for (const row of rows) {
-        const answers = this.issuers.map(i => row[i]).filter(a => a !== undefined);
-        if (answers.length > 0 && answers.every(a => a === answers[0])) {
+      for (const row of completedRows) {
+        const answers = this.issuers.map(i => row[i]);
+        // Since we filtered, we know all issuers answered; now check if they are identical
+        if (answers.every(a => a === answers[0])) {
           agreeCount++;
         }
       }
@@ -138,6 +153,7 @@ export default {
         percentAgree: ((agreeCount / total) * 100).toFixed(1)
       };
     },
+
     isRoundComplete() {
       // If we haven't even loaded issuers yet, it's not complete
       if (this.issuers.length === 0) return false;
