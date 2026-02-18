@@ -7,7 +7,7 @@
 
     <div v-else>
       <!-- Agreement stats -->
-      <div class="mb-4 text-lg">
+      <div class="mb-4 text-lg" v-if="isRoundComplete">
         <strong>Agreement:</strong>
         {{ agreementStats.agree }} / {{ agreementStats.total }}
         ({{ agreementStats.percentAgree }}%)
@@ -45,7 +45,7 @@
       </ul>
 
       <!-- Table -->
-      <table>
+      <table v-if="isRoundComplete">
         <thead>
         <tr>
           <th
@@ -94,7 +94,8 @@ export default {
       loading: true,
       error: null,
       issuerTotalCounts: {},
-      issuerAnsweredCounts: {}
+      issuerAnsweredCounts: {},
+      isRoundComplete: false,
     };
   },
 
@@ -136,6 +137,22 @@ export default {
         agree: agreeCount,
         percentAgree: ((agreeCount / total) * 100).toFixed(1)
       };
+    },
+    isRoundComplete() {
+      // If we haven't even loaded issuers yet, it's not complete
+      if (this.issuers.length === 0) return false;
+
+      return this.issuers.every(issuer => {
+        const total = this.issuerTotalCounts[issuer];
+        const answered = this.issuerAnsweredCounts[issuer];
+
+        // Ensure both values exist and are equal
+        // We use > 0 to ensure we aren't completing on uninitialized data
+        return total !== undefined &&
+            answered !== undefined &&
+            total > 0 &&
+            answered === total;
+      });
     }
   },
 
