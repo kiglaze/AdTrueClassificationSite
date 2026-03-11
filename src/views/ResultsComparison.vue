@@ -69,7 +69,7 @@
           </td>
           <td>
             <a
-                :href="fileUrl(row.full_filepath)"
+                :href="'/image_review/' + row.id"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -110,11 +110,15 @@ export default {
       for (const row of this.rawData) {
         const fp = row.full_filepath;
         if (!grouped[fp]) {
-          grouped[fp] = { full_filepath: fp };
+          grouped[fp] = { full_filepath: fp, id: row.id };
         }
         grouped[fp][row.classification_issuer] = row.is_suspected_ad_manual;
       }
-      return Object.values(grouped);
+      const rows = Object.values(grouped);
+      const countAnswers = (row) =>
+          this.issuers.filter(issuer => row[issuer] !== undefined && row[issuer] !== null).length;
+
+      return rows.sort((a, b) => countAnswers(b) - countAnswers(a));
     },
 
     agreementStats() {
