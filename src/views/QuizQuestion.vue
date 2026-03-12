@@ -125,6 +125,7 @@
             :src="currentImageReferrerRecording"
         />
       </div>
+      <p>{{currentImageReferrerUrl}}</p>
     </div>
     <div v-else class="quiz-contents">
       <p>There are no images available for you to classify.</p>
@@ -249,6 +250,11 @@ export default {
       const img = this.images[this.currentImageIndex];
       if (!img) return '';
       return `${window.location.origin}/api/${img.video_filepath}`;
+    },
+    currentImageReferrerUrl() {
+      const img = this.images[this.currentImageIndex];
+      if (!img) return '';
+      return img.website_url || '';
     },
   },
   methods: {
