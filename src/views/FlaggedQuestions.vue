@@ -73,7 +73,7 @@ export default {
           {{ item.notes || '—' }}
         </td>
         <td class="border border-gray-200 px-4 py-2 text-gray-600">
-          ✏️
+          <a :href="`/edit_answer/${item.img_saved_data_id}`">✏️</a>
         </td>
       </tr>
       </tbody>
