@@ -4,7 +4,8 @@
   </div>
   <nav class="bottom-nav">
     <router-link to="/">Quiz Questions</router-link> |
-    <router-link to="/results_comparison">Results Comparison</router-link>
+    <router-link to="/results_comparison">Results Comparison</router-link> |
+    <router-link to="/flagged_questions">Flagged Questions</router-link>
   </nav>
 </template>
 
