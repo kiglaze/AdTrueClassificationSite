@@ -106,6 +106,15 @@ export default {
       type: Number,
       required: false,
     },
+    currentImageSavedData: {
+      type: Object,
+      required: false,
+    },
+    isPreloaded: {
+      type: Boolean,
+      required: false,
+      default: false,
+    }
   },
   data() {
     return {
@@ -208,19 +217,27 @@ export default {
   },
   watch: {
     async currentImageSavedDataId(newCurrentImageSavedDataId) {
-      try {
-        // read username cookie
-        const saved_username = cookies.get('username');
-        if (saved_username) {
-          const imagesRequestUrl = `/api/img_truth_and_saved/${newCurrentImageSavedDataId}?user=${encodeURIComponent(saved_username)}`;
-          const [questionsResponse] = await Promise.all([
-            fetch(imagesRequestUrl)
-          ]);
-          const questionsResult = await questionsResponse.json();
-          this.questionResultData = questionsResult.data || [];
+      if (!this.isPreloaded) {
+        try {
+          // read username cookie
+          const saved_username = cookies.get('username');
+          if (saved_username) {
+            const imagesRequestUrl = `/api/img_truth_and_saved/${newCurrentImageSavedDataId}?user=${encodeURIComponent(saved_username)}`;
+            const [questionsResponse] = await Promise.all([
+              fetch(imagesRequestUrl)
+            ]);
+            const questionsResult = await questionsResponse.json();
+            this.questionResultData = questionsResult.data || [];
+          }
+        } catch (error) {
+          alert('Failed to fetch image: ' + error.message);
         }
-      } catch (error) {
-        alert('Failed to fetch image: ' + error.message);
+      }
+
+    },
+    async currentImageSavedData(newCurrentImageSavedData) {
+      if (newCurrentImageSavedData) {
+        this.questionResultData = newCurrentImageSavedData;
       }
     },
     async questionResultData(newQuestionResultData) {

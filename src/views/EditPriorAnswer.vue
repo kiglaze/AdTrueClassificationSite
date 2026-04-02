@@ -1,6 +1,6 @@
 <template>
   <div class="quiz-container">
-    <EditableImageAnswer :current-image-saved-data-id="$route.params.id" />
+    <EditableImageAnswer :current-image-saved-data-id="$route.params.id" :is-preloaded="0" />
   </div>
 </template>
 

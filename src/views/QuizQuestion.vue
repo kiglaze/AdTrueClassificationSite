@@ -22,7 +22,7 @@
         </button>
       </div>
 
-      <EditableImageAnswer @submit-answer-start="nextImage" :current-image-saved-data-id="currentImageSavedDataId" />
+      <EditableImageAnswer @submit-answer-start="nextImage" :current-image-saved-data-id="currentImageSavedDataId" :current-image-saved-data="currentImageSavedData" :is-preloaded="1" />
     </div>
     <div v-else class="quiz-contents">
       <p>There are no images available for you to classify.</p>
@@ -102,12 +102,15 @@ export default {
       const questionsResponse = await fetch(imagesRequestUrl);
       const questionsResult = await questionsResponse.json();
       this.images = questionsResult.data || [];
-    }
+    },
   },
   computed: {
     currentImageSavedDataId() {
       const img = this.images[this.currentImageIndex];
       return img ? img.id : null;
+    },
+    currentImageSavedData() {
+      return this.images[this.currentImageIndex] || null;
     },
     currentImageFullFilepath() {
       const img = this.images[this.currentImageIndex];
